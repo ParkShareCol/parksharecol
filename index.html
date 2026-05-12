@@ -1,0 +1,1801 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ParkShare — Comparte tu ruta. Encuentra parqueo.</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0f1e;
+    --bg2: #0d1526;
+    --surface: rgba(255,255,255,0.04);
+    --surface2: rgba(255,255,255,0.08);
+    --border: rgba(255,255,255,0.1);
+    --accent: #FF5C38;
+    --accent2: #FF8C42;
+    --green: #00E5A0;
+    --blue: #3B82F6;
+    --text: #F0F4FF;
+    --text2: #8B9DC3;
+    --text3: #CBD5E1;
+    --card-bg: rgba(255,255,255,0.05);
+    --glass: rgba(15,25,50,0.7);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* CUSTOM CURSOR */
+  .cursor {
+    position: fixed;
+    width: 12px; height: 12px;
+    background: var(--accent);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%,-50%);
+    transition: transform 0.1s, width 0.2s, height 0.2s, background 0.2s;
+  }
+  .cursor-ring {
+    position: fixed;
+    width: 36px; height: 36px;
+    border: 1.5px solid rgba(255,92,56,0.5);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9998;
+    transform: translate(-50%,-50%);
+    transition: transform 0.15s ease-out, width 0.2s, height 0.2s;
+  }
+  body:has(a:hover) .cursor, body:has(button:hover) .cursor { width: 20px; height: 20px; }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 40px;
+    background: rgba(10,15,30,0.8);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800; font-size: 1.4rem;
+    color: var(--text);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .logo-dot {
+    width: 10px; height: 10px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%,100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.4); opacity: 0.7; }
+  }
+  .nav-links { display: flex; gap: 32px; align-items: center; }
+  .nav-links a {
+    color: var(--text2); text-decoration: none;
+    font-size: 0.9rem; font-weight: 500;
+    transition: color 0.2s; cursor: none;
+  }
+  .nav-links a:hover { color: var(--text); }
+  .nav-cta {
+    background: var(--accent); color: #fff !important;
+    padding: 10px 22px; border-radius: 50px;
+    font-weight: 600 !important;
+    transition: transform 0.2s, box-shadow 0.2s !important;
+  }
+  .nav-cta:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(255,92,56,0.4);
+  }
+
+  /* HERO */
+  #hero {
+    min-height: 100vh;
+    display: flex; align-items: center;
+    position: relative; overflow: hidden;
+    padding: 120px 40px 80px;
+  }
+  .hero-bg {
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse 80% 60% at 60% 40%, rgba(255,92,56,0.12) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 80% at 20% 80%, rgba(59,130,246,0.08) 0%, transparent 50%);
+  }
+  .hero-grid {
+    position: absolute; inset: 0;
+    background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 60px 60px;
+    mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+  }
+  .hero-content {
+    max-width: 560px; position: relative; z-index: 2;
+  }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 50px; padding: 6px 16px;
+    font-size: 0.8rem; color: var(--text2);
+    margin-bottom: 28px;
+    animation: fadeUp 0.8s ease both;
+  }
+  .hero-badge-dot { width: 6px; height: 6px; background: var(--green); border-radius: 50%; animation: pulse 1.5s infinite; }
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2.8rem, 6vw, 4.5rem);
+    font-weight: 800; line-height: 1.05;
+    color: var(--text);
+    animation: fadeUp 0.8s 0.15s ease both;
+  }
+  h1 span { color: var(--accent); }
+  .hero-sub {
+    font-size: 1.2rem; color: var(--text2);
+    margin: 20px 0 40px;
+    font-weight: 300; line-height: 1.6;
+    animation: fadeUp 0.8s 0.3s ease both;
+  }
+  .hero-sub strong { color: var(--text3); font-weight: 500; }
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: var(--accent);
+    color: #fff; padding: 16px 32px;
+    border-radius: 50px; font-size: 1rem;
+    font-weight: 600; font-family: 'DM Sans', sans-serif;
+    border: none; cursor: none;
+    transition: transform 0.2s, box-shadow 0.3s;
+    animation: fadeUp 0.8s 0.45s ease both;
+    text-decoration: none;
+  }
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 40px rgba(255,92,56,0.45);
+  }
+  .btn-primary svg { transition: transform 0.2s; }
+  .btn-primary:hover svg { transform: translateX(4px); }
+
+  /* FLOATING PHONE */
+  .phone-mockup {
+    position: absolute; right: 5%; top: 50%;
+    transform: translateY(-50%);
+    width: 260px; z-index: 2;
+    animation: float 4s ease-in-out infinite, fadeIn 1s 0.6s ease both;
+    filter: drop-shadow(0 40px 80px rgba(255,92,56,0.25));
+  }
+  @keyframes float {
+    0%,100% { transform: translateY(-50%) rotate(-2deg); }
+    50% { transform: translateY(calc(-50% - 20px)) rotate(1deg); }
+  }
+  .phone-frame {
+    background: linear-gradient(145deg, #1a2340, #0d1526);
+    border-radius: 36px;
+    border: 2px solid rgba(255,255,255,0.12);
+    padding: 14px;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.05), 0 40px 80px rgba(0,0,0,0.6);
+  }
+  .phone-screen {
+    background: linear-gradient(160deg, #0f1a35, #0a1020);
+    border-radius: 26px; overflow: hidden;
+    aspect-ratio: 9/18;
+    display: flex; flex-direction: column;
+  }
+  .phone-status {
+    display: flex; justify-content: space-between;
+    padding: 10px 16px 6px; font-size: 0.55rem; color: rgba(255,255,255,0.5);
+  }
+  .phone-header {
+    padding: 10px 16px;
+    background: rgba(255,255,255,0.04);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .phone-header-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.75rem; font-weight: 700; color: var(--text);
+  }
+  .phone-header-sub { font-size: 0.5rem; color: var(--text2); }
+  .phone-map-area {
+    flex: 1; background: #0d1a2e;
+    position: relative; overflow: hidden;
+  }
+  .map-road { position: absolute; background: rgba(255,255,255,0.06); border-radius: 2px; }
+  .map-road.h { height: 4px; left: 0; right: 0; }
+  .map-road.v { width: 4px; top: 0; bottom: 0; }
+  .map-dot {
+    position: absolute; border-radius: 50%;
+    animation: mapMove 3s ease-in-out infinite;
+  }
+  @keyframes mapMove {
+    0%,100% { transform: translate(0,0); }
+    50% { transform: translate(20px, -10px); }
+  }
+  .phone-bottom {
+    padding: 12px 16px;
+    background: rgba(255,255,255,0.04);
+  }
+  .phone-route-card {
+    background: rgba(255,92,56,0.15);
+    border: 1px solid rgba(255,92,56,0.3);
+    border-radius: 12px; padding: 10px 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .phone-route-icon {
+    width: 28px; height: 28px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.7rem;
+  }
+  .phone-route-text { flex: 1; }
+  .phone-route-label { font-size: 0.5rem; color: var(--text2); }
+  .phone-route-value { font-size: 0.6rem; color: var(--text); font-weight: 600; }
+
+  /* FLOATING DOTS BG */
+  .bg-dots { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+  .bg-dot {
+    position: absolute; border-radius: 50%;
+    background: rgba(255,92,56,0.15);
+    animation: driftDot linear infinite;
+  }
+  @keyframes driftDot {
+    0% { transform: translateY(100vh) translateX(0); opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { transform: translateY(-100px) translateX(40px); opacity: 0; }
+  }
+
+  /* SECTIONS */
+  section { padding: 100px 40px; position: relative; }
+  .section-label {
+    font-size: 0.75rem; font-weight: 600; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--accent);
+    margin-bottom: 16px; display: block;
+  }
+  h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 700; line-height: 1.15;
+    color: var(--text);
+  }
+  .section-sub {
+    font-size: 1.05rem; color: var(--text2);
+    margin-top: 12px; max-width: 520px; line-height: 1.7;
+  }
+
+  /* PROBLEM */
+  #problem { background: var(--bg2); }
+  .problem-inner { max-width: 1100px; margin: 0 auto; }
+  .problem-visual {
+    margin-top: 60px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px; overflow: hidden;
+    height: 240px; position: relative;
+  }
+  .road-container {
+    position: absolute; inset: 0;
+    display: flex; align-items: center;
+    overflow: hidden;
+  }
+  .road-lane {
+    position: absolute; left: 0; right: 0;
+    height: 64px;
+  }
+  .road-lane.lane1 { top: 40px; }
+  .road-lane.lane2 { top: 120px; }
+  .road-lane.lane3 { top: 200px; }
+  .car {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    font-size: 1.6rem;
+    animation: driveCar linear infinite;
+  }
+  @keyframes driveCar {
+    0% { left: -80px; }
+    100% { left: 110%; }
+  }
+  .problem-label {
+    position: absolute; bottom: 20px; left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Syne', sans-serif;
+    font-size: 1.1rem; font-weight: 700;
+    color: var(--text);
+    text-align: center;
+    background: rgba(10,15,30,0.85);
+    border: 1px solid var(--border);
+    border-radius: 12px; padding: 10px 24px;
+    backdrop-filter: blur(10px);
+    white-space: nowrap;
+  }
+  .empty-seat {
+    position: absolute; top: 6px; right: 0;
+    font-size: 0.55rem; color: rgba(255,92,56,0.8);
+    background: rgba(255,92,56,0.1); border-radius: 4px; padding: 2px 4px;
+    white-space: nowrap;
+  }
+
+  /* INSIGHTS */
+  #insights { max-width: 1100px; margin: 0 auto; padding: 100px 40px; }
+  .insights-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 20px; margin-top: 50px;
+  }
+  .insight-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 20px; padding: 30px;
+    transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+    opacity: 0; transform: translateY(30px);
+    transition: opacity 0.6s, transform 0.6s;
+  }
+  .insight-card.visible { opacity: 1; transform: translateY(0); }
+  .insight-card:hover {
+    border-color: rgba(255,92,56,0.3);
+    box-shadow: 0 20px 60px rgba(255,92,56,0.08);
+    transform: translateY(-4px);
+  }
+  .insight-icon {
+    font-size: 2rem; margin-bottom: 16px;
+    display: block;
+  }
+  .insight-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 2.5rem; font-weight: 800;
+    color: var(--accent); line-height: 1;
+    margin-bottom: 8px;
+  }
+  .insight-text { font-size: 0.9rem; color: var(--text2); line-height: 1.6; }
+
+  /* APP SIMULATION */
+  #simulation {
+    background: linear-gradient(180deg, var(--bg) 0%, #060c1a 100%);
+    overflow: hidden;
+  }
+  .sim-inner { max-width: 900px; margin: 0 auto; }
+  .sim-device {
+    margin-top: 60px;
+    background: linear-gradient(145deg, #111827, #0d1526);
+    border-radius: 32px;
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 40px 120px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.05);
+    overflow: hidden;
+  }
+  .sim-topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 24px;
+    background: rgba(255,255,255,0.03);
+    border-bottom: 1px solid var(--border);
+  }
+  .sim-topbar-logo {
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem; font-weight: 800; color: var(--text);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .sim-topbar-logo span { color: var(--accent); }
+  .sim-step-indicator {
+    display: flex; gap: 6px; align-items: center;
+  }
+  .step-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--border);
+    transition: background 0.3s, transform 0.3s;
+  }
+  .step-dot.active { background: var(--accent); transform: scale(1.3); }
+  .step-dot.done { background: var(--green); }
+
+  .sim-body { padding: 32px 28px; min-height: 420px; }
+
+  /* STEP PANELS */
+  .sim-step { display: none; animation: stepIn 0.4s ease; }
+  .sim-step.active { display: block; }
+  @keyframes stepIn {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  .sim-step-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.3rem; font-weight: 700; color: var(--text);
+    margin-bottom: 6px;
+  }
+  .sim-step-sub { font-size: 0.9rem; color: var(--text2); margin-bottom: 28px; }
+
+  /* ROUTE SELECTOR */
+  .route-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+  .route-btn {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 14px; padding: 14px 16px;
+    color: var(--text2); font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem; font-weight: 500;
+    cursor: none; transition: all 0.2s;
+    text-align: left;
+  }
+  .route-btn:hover { border-color: rgba(255,92,56,0.4); color: var(--text); background: rgba(255,92,56,0.08); }
+  .route-btn.selected { border-color: var(--accent); color: var(--text); background: rgba(255,92,56,0.12); }
+  .route-btn .r-from { font-size: 0.7rem; color: var(--accent); margin-bottom: 4px; display: block; }
+  .route-btn .r-to { font-size: 0.65rem; color: var(--text2); }
+  .route-btn .r-icon { font-size: 1.2rem; margin-bottom: 6px; display: block; }
+
+  /* TIME SELECTOR */
+  .time-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 24px; }
+  .time-chip {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 50px; padding: 8px 18px;
+    color: var(--text2); font-family: 'DM Sans', sans-serif;
+    font-size: 0.8rem; cursor: none; transition: all 0.2s;
+  }
+  .time-chip:hover { border-color: rgba(255,92,56,0.4); color: var(--text); }
+  .time-chip.selected { border-color: var(--accent); color: var(--text); background: rgba(255,92,56,0.12); }
+
+  /* LOADING */
+  .loading-box {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; padding: 60px 20px;
+    text-align: center;
+  }
+  .loader-ring {
+    width: 70px; height: 70px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 24px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.1rem; font-weight: 600; color: var(--text);
+    margin-bottom: 6px;
+  }
+  .loading-dots { color: var(--text2); font-size: 0.85rem; }
+  .loading-dots::after {
+    content: '';
+    animation: dots 1.5s steps(4, end) infinite;
+  }
+  @keyframes dots {
+    0% { content: ''; }
+    25% { content: '.'; }
+    50% { content: '..'; }
+    75% { content: '...'; }
+  }
+
+  /* MATCH CARD */
+  .match-card {
+    background: linear-gradient(135deg, rgba(0,229,160,0.08), rgba(0,229,160,0.03));
+    border: 1.5px solid rgba(0,229,160,0.3);
+    border-radius: 20px; padding: 24px;
+    margin-bottom: 20px;
+    animation: matchReveal 0.6s cubic-bezier(0.34,1.56,0.64,1) both;
+  }
+  @keyframes matchReveal {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  .match-header {
+    display: flex; align-items: center; gap: 14px; margin-bottom: 18px;
+  }
+  .match-avatar {
+    width: 52px; height: 52px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem; font-weight: 800; color: #fff;
+    font-family: 'Syne', sans-serif;
+    flex-shrink: 0;
+  }
+  .match-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.1rem; font-weight: 700; color: var(--text);
+  }
+  .match-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: rgba(0,229,160,0.15);
+    color: var(--green); border-radius: 50px;
+    padding: 3px 10px; font-size: 0.7rem; font-weight: 600;
+    margin-top: 4px;
+  }
+  .match-details { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .match-detail {
+    background: rgba(255,255,255,0.04);
+    border-radius: 12px; padding: 12px 14px;
+  }
+  .match-detail-label { font-size: 0.65rem; color: var(--text2); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .match-detail-value { font-size: 0.9rem; color: var(--text); font-weight: 600; }
+
+  /* SUCCESS */
+  .success-box {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; padding: 50px 20px; text-align: center;
+  }
+  .success-icon {
+    font-size: 4rem; margin-bottom: 20px;
+    animation: bounceIn 0.6s cubic-bezier(0.34,1.56,0.64,1) both;
+  }
+  @keyframes bounceIn {
+    from { transform: scale(0); }
+    to { transform: scale(1); }
+  }
+  .success-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.8rem; font-weight: 800; color: var(--green);
+    margin-bottom: 10px;
+  }
+  .success-sub { font-size: 0.95rem; color: var(--text2); margin-bottom: 28px; line-height: 1.6; }
+  .success-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px; padding: 18px 24px;
+    display: flex; gap: 16px; align-items: center;
+    text-align: left; width: 100%;
+  }
+  .success-card-icon { font-size: 1.8rem; }
+  .success-card-label { font-size: 0.75rem; color: var(--text2); }
+  .success-card-val { font-size: 0.9rem; color: var(--text); font-weight: 600; }
+
+  /* BUTTON STYLES */
+  .btn-sim {
+    background: var(--accent); color: #fff;
+    border: none; border-radius: 14px;
+    padding: 16px 28px; font-size: 0.95rem;
+    font-weight: 600; font-family: 'DM Sans', sans-serif;
+    cursor: none; width: 100%;
+    transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-sim:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(255,92,56,0.4); }
+  .btn-sim:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-connect {
+    background: var(--green); color: #0a0f1e;
+  }
+  .btn-connect:hover { box-shadow: 0 12px 32px rgba(0,229,160,0.4); }
+  .btn-ghost {
+    background: transparent; border: 1.5px solid var(--border);
+    color: var(--text2); border-radius: 14px;
+    padding: 14px 28px; font-size: 0.9rem;
+    font-weight: 500; font-family: 'DM Sans', sans-serif;
+    cursor: none; width: 100%; margin-top: 10px;
+    transition: border-color 0.2s, color 0.2s;
+  }
+  .btn-ghost:hover { border-color: rgba(255,255,255,0.25); color: var(--text); }
+
+  /* HOW IT WORKS */
+  #how {
+    background: var(--bg2);
+    overflow: hidden;
+  }
+  .how-inner { max-width: 1100px; margin: 0 auto; }
+  .how-flow {
+    display: flex; align-items: center;
+    gap: 0; margin-top: 60px;
+    flex-wrap: wrap; justify-content: center;
+  }
+  .how-step {
+    display: flex; flex-direction: column; align-items: center;
+    text-align: center; max-width: 180px;
+    opacity: 0; transform: translateY(20px);
+    transition: opacity 0.6s, transform 0.6s;
+  }
+  .how-step.visible { opacity: 1; transform: translateY(0); }
+  .how-icon-wrap {
+    width: 72px; height: 72px;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.8rem; margin-bottom: 16px;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    position: relative;
+  }
+  .how-step:hover .how-icon-wrap {
+    border-color: rgba(255,92,56,0.5);
+    box-shadow: 0 0 30px rgba(255,92,56,0.15);
+  }
+  .how-step-num {
+    position: absolute; top: -8px; right: -8px;
+    width: 22px; height: 22px;
+    background: var(--accent); border-radius: 50%;
+    font-family: 'Syne', sans-serif; font-size: 0.65rem;
+    font-weight: 700; color: #fff;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .how-label {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.9rem; font-weight: 700; color: var(--text);
+    margin-bottom: 6px;
+  }
+  .how-desc { font-size: 0.75rem; color: var(--text2); line-height: 1.5; }
+  .how-arrow {
+    color: var(--accent); font-size: 1.2rem;
+    margin: 0 12px; opacity: 0.5;
+    flex-shrink: 0;
+    animation: arrowPulse 1.5s ease-in-out infinite;
+  }
+  @keyframes arrowPulse {
+    0%,100% { transform: translateX(0); opacity: 0.5; }
+    50% { transform: translateX(6px); opacity: 1; }
+  }
+
+  /* DIFFERENTIATION */
+  #diff {
+    text-align: center; overflow: hidden;
+    padding: 120px 40px;
+    background: linear-gradient(180deg, var(--bg) 0%, #080d1a 100%);
+  }
+  .diff-quote {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2rem, 5vw, 3.8rem);
+    font-weight: 800; line-height: 1.15;
+    color: var(--text); max-width: 800px; margin: 0 auto 20px;
+    opacity: 0; transform: translateY(30px);
+    transition: opacity 0.8s, transform 0.8s;
+  }
+  .diff-quote.visible { opacity: 1; transform: translateY(0); }
+  .diff-quote .highlight { color: var(--accent); }
+  .diff-sub {
+    color: var(--text2); font-size: 1rem;
+    opacity: 0; transition: opacity 1s 0.3s;
+  }
+  .diff-sub.visible { opacity: 1; }
+
+  /* IMPACT */
+  #impact { background: var(--bg2); }
+  .impact-inner { max-width: 1100px; margin: 0 auto; }
+  .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 24px; margin-top: 60px; }
+  .metric-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 24px; padding: 36px 28px;
+    text-align: center;
+    transition: transform 0.3s, border-color 0.3s;
+  }
+  .metric-card:hover { transform: translateY(-4px); border-color: rgba(255,92,56,0.3); }
+  .metric-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 3.5rem; font-weight: 800;
+    line-height: 1;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    margin-bottom: 10px;
+  }
+  .metric-label { font-size: 0.9rem; color: var(--text2); line-height: 1.4; }
+
+  /* VALIDATION */
+  #validation { max-width: 1100px; margin: 0 auto; padding: 100px 40px; }
+  .valid-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 50px; align-items: center; }
+  .valid-stat-big {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(4rem, 10vw, 7rem);
+    font-weight: 800; line-height: 1;
+    color: var(--accent); margin-bottom: 8px;
+  }
+  .valid-stat-label { font-size: 1rem; color: var(--text2); line-height: 1.6; max-width: 320px; }
+  .valid-cards-col { display: flex; flex-direction: column; gap: 16px; }
+  .valid-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px; padding: 20px 22px;
+    display: flex; align-items: center; gap: 16px;
+    transition: border-color 0.3s;
+  }
+  .valid-card:hover { border-color: rgba(255,92,56,0.3); }
+  .valid-card-icon { font-size: 1.6rem; }
+  .valid-card-num { font-family: 'Syne', sans-serif; font-size: 1.3rem; font-weight: 700; color: var(--text); }
+  .valid-card-desc { font-size: 0.8rem; color: var(--text2); }
+
+  /* CALCULATOR */
+  #calculator {
+    background: linear-gradient(135deg, #080d1a, #0d1526);
+    padding: 100px 40px;
+  }
+  .calc-inner { max-width: 800px; margin: 0 auto; }
+  .calc-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 28px; padding: 40px;
+    margin-top: 50px;
+  }
+  .calc-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 28px; }
+  .calc-field label {
+    display: block; font-size: 0.8rem; color: var(--text2);
+    margin-bottom: 8px; font-weight: 500;
+  }
+  .calc-input {
+    width: 100%; background: rgba(255,255,255,0.06);
+    border: 1.5px solid var(--border); border-radius: 12px;
+    padding: 12px 16px; color: var(--text);
+    font-family: 'DM Sans', sans-serif; font-size: 0.95rem;
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+  }
+  .calc-input:focus { outline: none; border-color: rgba(255,92,56,0.5); }
+  .calc-result {
+    background: linear-gradient(135deg, rgba(255,92,56,0.1), rgba(255,140,66,0.05));
+    border: 1.5px solid rgba(255,92,56,0.3);
+    border-radius: 20px; padding: 28px;
+    margin-top: 8px; display: none;
+    animation: stepIn 0.4s ease;
+  }
+  .calc-result.show { display: block; }
+  .calc-result-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 3rem; font-weight: 800; color: var(--accent);
+    line-height: 1; margin-bottom: 4px;
+  }
+  .calc-result-label { font-size: 0.85rem; color: var(--text2); margin-bottom: 16px; }
+  .calc-fun {
+    background: rgba(255,255,255,0.04);
+    border-radius: 12px; padding: 14px 16px;
+    font-size: 0.85rem; color: var(--text3); line-height: 1.5;
+  }
+  .calc-fun strong { color: var(--accent); }
+
+  /* SOCIAL */
+  #social {
+    background: var(--bg2);
+    padding: 100px 40px; text-align: center;
+  }
+  .social-inner { max-width: 700px; margin: 0 auto; }
+  .social-grid { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-top: 40px; }
+  .social-btn {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 50px; padding: 14px 24px;
+    color: var(--text); text-decoration: none;
+    font-size: 0.9rem; font-weight: 600;
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s, background 0.2s;
+    cursor: none;
+  }
+  .social-btn:hover { transform: translateY(-3px); }
+  .social-btn.instagram:hover { border-color: #E1306C; box-shadow: 0 12px 32px rgba(225,48,108,0.25); background: rgba(225,48,108,0.08); }
+  .social-btn.tiktok:hover { border-color: #69C9D0; box-shadow: 0 12px 32px rgba(105,201,208,0.25); background: rgba(105,201,208,0.08); }
+  .social-btn.linkedin:hover { border-color: #0077B5; box-shadow: 0 12px 32px rgba(0,119,181,0.25); background: rgba(0,119,181,0.08); }
+  .social-btn.whatsapp:hover { border-color: #25D366; box-shadow: 0 12px 32px rgba(37,211,102,0.25); background: rgba(37,211,102,0.08); }
+  .social-icon { font-size: 1.2rem; }
+
+  /* REGISTER */
+  #register { padding: 100px 40px; }
+  .register-inner { max-width: 640px; margin: 0 auto; }
+  .register-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 28px; padding: 40px;
+    margin-top: 50px;
+  }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .form-field { display: flex; flex-direction: column; gap: 8px; }
+  .form-field.full { grid-column: 1 / -1; }
+  .form-field label { font-size: 0.8rem; color: var(--text2); font-weight: 500; }
+  .form-input, .form-select {
+    background: rgba(255,255,255,0.06);
+    border: 1.5px solid var(--border);
+    border-radius: 12px; padding: 12px 16px;
+    color: var(--text); font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem; transition: border-color 0.2s;
+    -webkit-appearance: none;
+  }
+  .form-input:focus, .form-select:focus { outline: none; border-color: rgba(255,92,56,0.5); }
+  .form-select option { background: #111827; color: var(--text); }
+  .register-success {
+    display: none; text-align: center; padding: 20px;
+    animation: stepIn 0.4s ease;
+  }
+  .register-success.show { display: block; }
+  .register-success .big-emoji { font-size: 3.5rem; margin-bottom: 12px; }
+  .register-success h3 { font-family: 'Syne', sans-serif; font-size: 1.4rem; color: var(--green); margin-bottom: 8px; }
+  .register-success p { color: var(--text2); font-size: 0.9rem; }
+
+  /* FINAL CTA */
+  #finalcta {
+    text-align: center; padding: 120px 40px;
+    background: linear-gradient(180deg, #080d1a 0%, var(--bg) 100%);
+    position: relative; overflow: hidden;
+  }
+  .cta-glow {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%,-50%);
+    width: 600px; height: 400px;
+    background: radial-gradient(ellipse, rgba(255,92,56,0.15) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .cta-title {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    font-weight: 800; color: var(--text);
+    margin-bottom: 16px; position: relative; z-index: 1;
+  }
+  .cta-sub { color: var(--text2); font-size: 1.05rem; margin-bottom: 40px; position: relative; z-index: 1; }
+  .btn-final {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff; padding: 20px 48px;
+    border-radius: 50px; font-size: 1.1rem;
+    font-weight: 700; font-family: 'Syne', sans-serif;
+    border: none; cursor: none;
+    transition: transform 0.3s, box-shadow 0.3s;
+    position: relative; z-index: 1;
+    text-decoration: none;
+  }
+  .btn-final:hover {
+    transform: scale(1.05);
+    box-shadow: 0 20px 60px rgba(255,92,56,0.5);
+  }
+
+  /* FOOTER */
+  footer {
+    padding: 30px 40px;
+    border-top: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 0.8rem; color: var(--text2);
+  }
+  footer span { color: var(--accent); }
+
+  /* SCROLL ANIMATIONS */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 768px) {
+    nav { padding: 16px 20px; }
+    .nav-links { display: none; }
+    section { padding: 80px 20px; }
+    #hero { padding: 120px 20px 300px; }
+    .phone-mockup { bottom: 30px; top: auto; right: 50%; transform: translateX(50%) scale(0.85); }
+    .valid-grid { grid-template-columns: 1fr; }
+    .calc-row { grid-template-columns: 1fr; }
+    .form-grid { grid-template-columns: 1fr; }
+    .form-field.full { grid-column: 1; }
+    .how-arrow { display: none; }
+    .how-flow { gap: 20px; }
+    .route-grid { grid-template-columns: 1fr; }
+  }
+
+  /* NOTIFICATION TOAST */
+  .toast {
+    position: fixed; bottom: 30px; right: 30px;
+    background: #1a2340; border: 1px solid var(--border);
+    border-radius: 14px; padding: 16px 20px;
+    display: flex; gap: 12px; align-items: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    transform: translateX(200%); transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    z-index: 1000; max-width: 320px;
+  }
+  .toast.show { transform: translateX(0); }
+  .toast-icon { font-size: 1.4rem; }
+  .toast-text { font-size: 0.85rem; color: var(--text); line-height: 1.4; }
+  .toast-text strong { display: block; font-weight: 600; color: var(--text); }
+  .toast-text span { color: var(--text2); }
+
+  /* PROGRESS BAR */
+  .progress-bar {
+    position: fixed; top: 0; left: 0; height: 2px;
+    background: var(--accent); z-index: 200;
+    transition: width 0.2s;
+  }
+
+  input[type=range] {
+    accent-color: var(--accent);
+    cursor: none;
+  }
+</style>
+</head>
+<body>
+
+<!-- CURSOR -->
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- PROGRESS BAR -->
+<div class="progress-bar" id="progressBar"></div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <div class="toast-icon" id="toastIcon">🚗</div>
+  <div class="toast-text">
+    <strong id="toastTitle">Nuevo match</strong>
+    <span id="toastMsg">Alguien comparte tu ruta</span>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <div class="logo"><div class="logo-dot"></div>ParkShare</div>
+  <div class="nav-links">
+    <a href="#simulation" onclick="smoothTo('simulation');return false;">Demo</a>
+    <a href="#how" onclick="smoothTo('how');return false;">¿Cómo funciona?</a>
+    <a href="#calculator" onclick="smoothTo('calculator');return false;">Calculadora</a>
+    <a href="#social" onclick="smoothTo('social');return false;">Redes</a>
+    <a href="#register" onclick="smoothTo('register');return false;" class="nav-cta">Unirme</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="bg-dots" id="bgDots"></div>
+  <div class="hero-content">
+    <h1>Comparte tu ruta.<br><span>Encuentra parqueo.</span></h1>
+    <p class="hero-sub">Menos carros, más cupos. Conectamos estudiantes con<br><strong>rutas y horarios similares</strong> para compartir el camino.</p>
+    <a href="#simulation" class="btn-primary" onclick="smoothTo('simulation');return false;">
+      Buscar ruta
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </a>
+  </div>
+
+  <!-- PHONE -->
+  <div class="phone-mockup">
+    <div class="phone-frame">
+      <div class="phone-screen">
+        <div class="phone-status">
+          <span>9:41</span><span>●●●</span>
+        </div>
+        <div class="phone-header">
+          <div class="phone-header-title">ParkShare</div>
+          <div class="phone-header-sub">3 coincidencias cerca de ti</div>
+        </div>
+        <div class="phone-map-area" id="phoneMap">
+          <div class="map-road h" style="top:30%"></div>
+          <div class="map-road h" style="top:60%"></div>
+          <div class="map-road v" style="left:30%"></div>
+          <div class="map-road v" style="left:70%"></div>
+          <div class="map-dot" style="width:8px;height:8px;background:#FF5C38;top:20%;left:25%;animation-delay:0s"></div>
+          <div class="map-dot" style="width:8px;height:8px;background:#00E5A0;top:50%;left:60%;animation-delay:1s"></div>
+          <div class="map-dot" style="width:8px;height:8px;background:#3B82F6;top:70%;left:40%;animation-delay:0.5s"></div>
+          <div class="map-dot" style="width:14px;height:14px;background:#FF5C38;border:2px solid rgba(255,92,56,0.4);top:40%;left:45%;animation-delay:0.2s"></div>
+        </div>
+        <div class="phone-bottom">
+          <div class="phone-route-card">
+            <div class="phone-route-icon">🚗</div>
+            <div class="phone-route-text">
+              <div class="phone-route-label">Tu ruta activa</div>
+              <div class="phone-route-value">El Retiro → Alto de las Palmas</div>
+            </div>
+            <div style="font-size:0.8rem;color:#00E5A0;font-weight:700">3 ✓</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROBLEM -->
+<section id="problem">
+  <div class="problem-inner">
+    <span class="section-label">El problema</span>
+    <h2>Un carro, una persona.<br>Tres puestos vacíos.</h2>
+    <p class="section-sub">Cada mañana, cientos de estudiantes llegan solos al campus. El problema no son los parqueaderos: es la distribución.</p>
+    <div class="problem-visual">
+      <div class="road-container" id="roadContainer"></div>
+    </div>
+  </div>
+</section>
+
+<!-- INSIGHTS -->
+<section>
+<div id="insights">
+  <span class="section-label">Datos reales</span>
+  <h2>Los cupos no faltan,<br>están mal distribuidos.</h2>
+  <div class="insights-grid">
+    <div class="insight-card">
+      <span class="insight-icon">🚗</span>
+      <div class="insight-num">87%</div>
+      <p class="insight-text">de estudiantes llegan solos al campus, con asientos vacíos disponibles todos los días.</p>
+    </div>
+    <div class="insight-card">
+      <span class="insight-icon">⏱️</span>
+      <div class="insight-num">7 min</div>
+      <p class="insight-text">promedio buscando parqueadero cada mañana. Tiempo que podría ser tuyo.</p>
+    </div>
+    <div class="insight-card">
+      <span class="insight-icon">🌿</span>
+      <div class="insight-num">40%</div>
+      <p class="insight-text">menos emisiones de CO₂ si cada carro llevara al menos 2 personas.</p>
+    </div>
+    <div class="insight-card">
+      <span class="insight-icon">💰</span>
+      <div class="insight-num">$300k</div>
+      <p class="insight-text">al mes en gasolina y parqueadero que podrías dividir con alguien de tu ruta.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- APP SIMULATION -->
+<section id="simulation">
+  <div class="sim-inner">
+    <span class="section-label">Demo interactivo</span>
+    <h2>Prueba la app<br>ahora mismo.</h2>
+    <p class="section-sub">Así funciona ParkShare. Haz clic en cada paso y vive la experiencia real.</p>
+
+    <div class="sim-device">
+      <div class="sim-topbar">
+        <div class="sim-topbar-logo">Park<span>Share</span></div>
+        <div class="sim-step-indicator">
+          <div class="step-dot active" id="sd1"></div>
+          <div class="step-dot" id="sd2"></div>
+          <div class="step-dot" id="sd3"></div>
+          <div class="step-dot" id="sd4"></div>
+        </div>
+      </div>
+      <div class="sim-body">
+
+        <!-- STEP 1: SELECT ROUTE -->
+        <div class="sim-step active" id="simStep1">
+          <div class="sim-step-title">¿Desde dónde vienes?</div>
+          <div class="sim-step-sub">Selecciona tu punto de partida hacia el Alto de las Palmas.</div>
+          <div class="route-grid">
+            <button class="route-btn" onclick="selectRoute(this,'El Poblado → Alto de las Palmas')">
+              <span class="r-icon">🏙️</span>
+              <span class="r-from">Origen</span>
+              El Poblado
+              <div class="r-to">→ Alto de las Palmas</div>
+            </button>
+            <button class="route-btn" onclick="selectRoute(this,'Envigado → Alto de las Palmas')">
+              <span class="r-icon">🌆</span>
+              <span class="r-from">Origen</span>
+              Envigado
+              <div class="r-to">→ Alto de las Palmas</div>
+            </button>
+            <button class="route-btn" onclick="selectRoute(this,'Llanogrande → Alto de las Palmas')">
+              <span class="r-icon">🌄</span>
+              <span class="r-from">Origen</span>
+              Llanogrande
+              <div class="r-to">→ Alto de las Palmas</div>
+            </button>
+            <button class="route-btn" onclick="selectRoute(this,'El Retiro → Alto de las Palmas')">
+              <span class="r-icon">🏡</span>
+              <span class="r-from">Origen</span>
+              El Retiro
+              <div class="r-to">→ Alto de las Palmas</div>
+            </button>
+          </div>
+          <div style="margin-bottom:16px">
+            <div class="sim-step-sub" style="margin-bottom:10px">¿A qué hora sales?</div>
+            <div class="time-row">
+              <button class="time-chip" onclick="selectTime(this)">6:30 am</button>
+              <button class="time-chip" onclick="selectTime(this)">7:00 am</button>
+              <button class="time-chip" onclick="selectTime(this)">7:30 am</button>
+              <button class="time-chip" onclick="selectTime(this)">8:00 am</button>
+              <button class="time-chip" onclick="selectTime(this)">8:30 am</button>
+            </div>
+          </div>
+          <button class="btn-sim" id="searchBtn" onclick="startSearch()" disabled>
+            🔍 Buscar ruta
+          </button>
+        </div>
+
+        <!-- STEP 2: LOADING -->
+        <div class="sim-step" id="simStep2">
+          <div class="loading-box">
+            <div class="loader-ring"></div>
+            <div class="loading-text">Buscando coincidencias…</div>
+            <div class="loading-dots">Analizando rutas y horarios</div>
+          </div>
+        </div>
+
+        <!-- STEP 3: MATCH -->
+        <div class="sim-step" id="simStep3">
+          <div class="sim-step-title">¡Encontramos un match! 🎯</div>
+          <div class="sim-step-sub">Alguien comparte tu ruta y horario.</div>
+          <div class="match-card" id="matchCard">
+            <div class="match-header">
+              <div class="match-avatar" id="matchAvatar">J</div>
+              <div>
+                <div class="match-name" id="matchName">Juan Camilo</div>
+                <div class="match-badge">● Coincidencia perfecta</div>
+              </div>
+            </div>
+            <div class="match-details">
+              <div class="match-detail">
+                <div class="match-detail-label">Ruta</div>
+                <div class="match-detail-value" id="matchRoute">Envigado → Alto de las Palmas</div>
+              </div>
+              <div class="match-detail">
+                <div class="match-detail-label">Hora de salida</div>
+                <div class="match-detail-value" id="matchTime">7:00 am</div>
+              </div>
+              <div class="match-detail">
+                <div class="match-detail-label">Carrera</div>
+                <div class="match-detail-value" id="matchCareer">Ingeniería</div>
+              </div>
+              <div class="match-detail">
+                <div class="match-detail-label">Valoración</div>
+                <div class="match-detail-value">⭐ 4.9</div>
+              </div>
+            </div>
+          </div>
+          <button class="btn-sim btn-connect" onclick="connectMatch()">
+            🤝 Conectar
+          </button>
+          <button class="btn-ghost" onclick="nextMatch()">Ver otro match →</button>
+        </div>
+
+        <!-- STEP 4: SUCCESS -->
+        <div class="sim-step" id="simStep4">
+          <div class="success-box">
+            <div class="success-icon">🎉</div>
+            <div class="success-title">¡Match exitoso!</div>
+            <p class="success-sub">Ya estás conectado con <strong id="successName">Juan Camilo</strong>. Coordinen el punto de encuentro y ¡listo!</p>
+            <div class="success-card">
+              <div class="success-card-icon">📍</div>
+              <div>
+                <div class="success-card-label">Punto de encuentro sugerido</div>
+                <div class="success-card-val" id="successMeeting">Parque El Poblado · 6:55 am</div>
+              </div>
+            </div>
+            <br>
+            <!-- PHONE BANNER -->
+            <!-- IN-APP CHAT -->
+            <div id="inAppChat" style="
+              width:100%; text-align:left;
+              background: rgba(255,255,255,0.04);
+              border: 1.5px solid rgba(0,229,160,0.3);
+              border-radius: 20px; overflow: hidden;
+              animation: matchReveal 0.5s 0.2s cubic-bezier(0.34,1.56,0.64,1) both;
+              margin-bottom: 4px;
+            ">
+              <!-- Chat header -->
+              <div style="
+                display:flex; align-items:center; gap:12px;
+                padding:14px 16px;
+                background: rgba(0,229,160,0.08);
+                border-bottom: 1px solid rgba(255,255,255,0.07);
+              ">
+                <div id="chatAvatar" style="
+                  width:38px; height:38px; border-radius:50%;
+                  background: linear-gradient(135deg, var(--accent), var(--accent2));
+                  display:flex; align-items:center; justify-content:center;
+                  font-family:'Syne',sans-serif; font-weight:800;
+                  font-size:1rem; color:#fff; flex-shrink:0;
+                ">J</div>
+                <div>
+                  <div id="chatName" style="font-family:'Syne',sans-serif;font-size:0.9rem;font-weight:700;color:var(--text)">Juan Camilo</div>
+                  <div style="display:flex;align-items:center;gap:5px;margin-top:2px;">
+                    <div style="width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite"></div>
+                    <span style="font-size:0.65rem;color:var(--green);">En línea</span>
+                  </div>
+                </div>
+              </div>
+              <!-- Messages -->
+              <div id="chatMessages" style="
+                height:180px; overflow-y:auto; padding:14px 16px;
+                display:flex; flex-direction:column; gap:10px;
+                scroll-behavior:smooth;
+              "></div>
+              <!-- Input -->
+              <div style="
+                display:flex; gap:8px; padding:10px 12px;
+                border-top: 1px solid rgba(255,255,255,0.07);
+                background: rgba(0,0,0,0.2);
+              ">
+                <input id="chatInput" type="text" placeholder="Escribe un mensaje…" style="
+                  flex:1; background:rgba(255,255,255,0.07);
+                  border:1.5px solid var(--border); border-radius:50px;
+                  padding:9px 16px; color:var(--text);
+                  font-family:'DM Sans',sans-serif; font-size:0.82rem;
+                  outline:none; transition:border-color 0.2s;
+                " onfocus="this.style.borderColor='rgba(0,229,160,0.5)'" onblur="this.style.borderColor='var(--border)'"
+                   onkeydown="if(event.key==='Enter')sendChatMsg()">
+                <button onclick="sendChatMsg()" style="
+                  background:var(--green); color:#0a0f1e;
+                  border:none; border-radius:50%; width:36px; height:36px;
+                  display:flex; align-items:center; justify-content:center;
+                  font-size:1rem; cursor:none; flex-shrink:0;
+                  transition:transform 0.2s,box-shadow 0.2s;
+                " onmouseover="this.style.transform='scale(1.1)';this.style.boxShadow='0 4px 14px rgba(0,229,160,0.4)'"
+                   onmouseout="this.style.transform='';this.style.boxShadow=''">➤</button>
+              </div>
+            </div>
+            <br>
+            <button class="btn-sim" onclick="resetSim()" style="background:rgba(255,255,255,0.08);border:1.5px solid var(--border)">
+              ↩ Volver a intentar
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how">
+  <div class="how-inner">
+    <span class="section-label">Proceso</span>
+    <h2>Simple, rápido,<br>sin complicaciones.</h2>
+    <div class="how-flow">
+      <div class="how-step">
+        <div class="how-icon-wrap">👤<div class="how-step-num">1</div></div>
+        <div class="how-label">Crea tu perfil</div>
+        <p class="how-desc">Ingresa tu ruta, horario y carrera universitaria.</p>
+      </div>
+      <div class="how-arrow">→</div>
+      <div class="how-step">
+        <div class="how-icon-wrap">🔍<div class="how-step-num">2</div></div>
+        <div class="how-label">Encuentra tu match</div>
+        <p class="how-desc">El algoritmo conecta estudiantes con rutas compatibles.</p>
+      </div>
+      <div class="how-arrow">→</div>
+      <div class="how-step">
+        <div class="how-icon-wrap">💬<div class="how-step-num">3</div></div>
+        <div class="how-label">Coordina el viaje</div>
+        <p class="how-desc">Chatea, define el punto y la hora de encuentro.</p>
+      </div>
+      <div class="how-arrow">→</div>
+      <div class="how-step">
+        <div class="how-icon-wrap">🚗<div class="how-step-num">4</div></div>
+        <div class="how-label">Comparte el viaje</div>
+        <p class="how-desc">Llegan juntos, ahorran plata y liberan cupos.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DIFFERENTIATION -->
+<section id="diff">
+  <div class="diff-quote" id="diffQuote">
+    "No construimos parqueaderos.<br><span class="highlight">Los hacemos suficientes.</span>"
+  </div>
+  <p class="diff-sub" id="diffSub">La solución no es más infraestructura. Es usar mejor la que ya existe.</p>
+</section>
+
+<!-- IMPACT -->
+<section id="impact">
+  <div class="impact-inner">
+    <span class="section-label">Impacto proyectado</span>
+    <h2>Números que<br>importan.</h2>
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-num" id="m1">0%</div>
+        <div class="metric-label">menos carros circulando en el campus</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-num" id="m2">0%</div>
+        <div class="metric-label">más disponibilidad de cupos de parqueo</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-num" id="m3">0%</div>
+        <div class="metric-label">menos estrés en tu llegada al campus</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- VALIDATION -->
+<section>
+<div id="validation">
+  <span class="section-label">Validación</span>
+  <h2>La comunidad ya<br>lo quiere.</h2>
+  <div class="valid-grid">
+    <div>
+      <div class="valid-stat-big">78%</div>
+      <p class="valid-stat-label">de estudiantes encuestados usarían ParkShare si estuviera disponible hoy.</p>
+      <p style="font-size:0.75rem;color:var(--text2);margin-top:12px">Basado en encuesta a 20 estudiantes del campus.</p>
+    </div>
+    <div class="valid-cards-col">
+      <div class="valid-card">
+        <div class="valid-card-icon">📊</div>
+        <div>
+          <div class="valid-card-num">20</div>
+          <div class="valid-card-desc">estudiantes encuestados</div>
+        </div>
+      </div>
+      <div class="valid-card">
+        <div class="valid-card-icon">🗺️</div>
+        <div>
+          <div class="valid-card-num">5</div>
+          <div class="valid-card-desc">zonas principales identificadas</div>
+        </div>
+      </div>
+      <div class="valid-card">
+        <div class="valid-card-icon">⏱️</div>
+        <div>
+          <div class="valid-card-num">7 min</div>
+          <div class="valid-card-desc">promedio perdido buscando parqueo</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- CALCULATOR -->
+<section id="calculator">
+  <div class="calc-inner">
+    <span class="section-label">Calculadora</span>
+    <h2>¿Cuánto tiempo<br>pierdes al semestre?</h2>
+    <p class="section-sub">Descubre cuántas horas de tu vida se van buscando parqueadero.</p>
+    <div class="calc-box">
+      <div class="calc-row">
+        <div class="calc-field">
+          <label>Días a la semana que vas a la universidad</label>
+          <input type="number" class="calc-input" id="calcDays" value="4" min="1" max="7" oninput="calcTime()">
+        </div>
+        <div class="calc-field">
+          <label>Minutos promedio buscando parqueadero</label>
+          <input type="number" class="calc-input" id="calcMins" value="20" min="1" max="120" oninput="calcTime()">
+        </div>
+      </div>
+      <div class="calc-result" id="calcResult">
+        <div class="calc-result-num" id="calcHours">0</div>
+        <div class="calc-result-label">horas perdidas al semestre buscando parqueadero</div>
+        <div class="calc-fun" id="calcFun">Con ese tiempo podrías...</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SOCIAL -->
+<section id="social">
+  <div class="social-inner">
+    <span class="section-label">Síguenos</span>
+    <h2>Únete a la<br>comunidad ParkShare.</h2>
+    <p class="section-sub" style="margin:0 auto">Estamos construyendo algo grande. Sé parte del movimiento desde el inicio.</p>
+    <div class="social-grid">
+      <a href="https://www.instagram.com/parksharecol?igsh=dmwwNnV6ZWtveTdp&utm_source=qr" target="_blank" class="social-btn instagram">
+        <span class="social-icon">📸</span> Instagram
+      </a>
+      <a href="https://www.tiktok.com/@parksharecol" target="_blank" class="social-btn tiktok">
+        <span class="social-icon">🎵</span> TikTok
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- REGISTER -->
+<section id="register">
+  <div class="register-inner">
+    <span class="section-label">¡Únete!</span>
+    <h2>Sé el primero<br>en usar ParkShare.</h2>
+    <p class="section-sub">Registra tus datos y te avisamos cuando lancemos en tu universidad.</p>
+    <div class="register-box">
+      <div id="registerForm">
+        <div class="form-grid">
+          <div class="form-field">
+            <label>Nombre completo</label>
+            <input type="text" class="form-input" id="regName" placeholder="Tu nombre">
+          </div>
+          <div class="form-field">
+            <label>Correo universitario</label>
+            <input type="email" class="form-input" id="regEmail" placeholder="usuario@universidad.edu.co">
+          </div>
+          <div class="form-field">
+            <label>¿Qué estudias?</label>
+            <select class="form-select" id="regCareer">
+              <option value="">Seleccionar carrera</option>
+              <option>Ingeniería Administrativa</option>
+              <option>Ingeniería Financiera</option>
+              <option>Ingeniería Civil</option>
+              <option>Ingeniería de Sistemas</option>
+              <option>Ingeniería Biomédica</option>
+              <option>Ingeniería Industrial</option>
+              <option>Ingeniería Mecánica</option>
+              <option>Ingeniería Biotecnológica</option>
+              <option>Nutrición</option>
+              <option>Medicina</option>
+              <option>Economía</option>
+              <option>Física</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label>¿Dónde vives?</label>
+            <select class="form-select" id="regZone">
+              <option value="">Seleccionar zona</option>
+              <option>El Poblado</option>
+              <option>Envigado</option>
+              <option>Llanogrande</option>
+              <option>El Retiro</option>
+              <option>Alto de las Palmas</option>
+              <option>Sabaneta</option>
+              <option>Bello</option>
+              <option>Otro municipio</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label>¿Tienes carro?</label>
+            <select class="form-select" id="regCar">
+              <option value="">Seleccionar</option>
+              <option>Sí, tengo carro propio</option>
+              <option>No, busco compañero de viaje</option>
+              <option>Depende del día</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label>¿Qué carro tienes? (opcional)</label>
+            <input type="text" class="form-input" id="regCarModel" placeholder="Ej: Chevrolet Spark">
+          </div>
+          <div class="form-field">
+            <label>Horario habitual</label>
+            <select class="form-select" id="regSchedule">
+              <option value="">Seleccionar</option>
+              <option>6:00 – 7:00 am</option>
+              <option>7:00 – 8:00 am</option>
+              <option>8:00 – 9:00 am</option>
+              <option>9:00 – 10:00 am</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label>Días a la semana</label>
+            <select class="form-select" id="regDays">
+              <option value="">Seleccionar</option>
+              <option>1–2 días</option>
+              <option>3 días</option>
+              <option>4 días</option>
+              <option>5 días</option>
+            </select>
+          </div>
+        </div>
+        <br>
+        <button class="btn-sim" onclick="submitRegister()">
+          🚀 Quiero ser parte del beta
+        </button>
+      </div>
+      <div class="register-success" id="registerSuccess">
+        <div class="big-emoji">🎉</div>
+        <h3>¡Ya estás en lista!</h3>
+        <p id="registerSuccessMsg">Te avisamos en cuanto ParkShare llegue a tu campus. Mientras tanto, síguenos en redes.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section id="finalcta">
+  <div class="cta-glow"></div>
+  <h2 class="cta-title">¿Listo para<br>llegar diferente?</h2>
+  <p class="cta-sub">Menos congestión. Más comunidad. Más cupos.</p>
+  <a href="#simulation" class="btn-final" onclick="smoothTo('simulation');return false;">
+    🚗 Probar ahora
+  </a>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <span style="color:var(--text2)">© 2025 <span>ParkShare</span> · Medellín, Colombia</span>
+  <span style="color:var(--text2)">Hecho con ❤️ para la comunidad universitaria</span>
+</footer>
+
+<script>
+// SMOOTH SCROLL helper (ensures nav works even inside iframes)
+function smoothTo(id) {
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// CURSOR
+const cursor = document.getElementById('cursor');
+const ring = document.getElementById('cursorRing');
+let mx = 0, my = 0, rx = 0, ry = 0;
+document.addEventListener('mousemove', e => {
+  mx = e.clientX; my = e.clientY;
+  cursor.style.left = mx + 'px';
+  cursor.style.top = my + 'px';
+});
+function animateRing() {
+  rx += (mx - rx) * 0.12;
+  ry += (my - ry) * 0.12;
+  ring.style.left = rx + 'px';
+  ring.style.top = ry + 'px';
+  requestAnimationFrame(animateRing);
+}
+animateRing();
+
+// PROGRESS BAR
+window.addEventListener('scroll', () => {
+  const pct = window.scrollY / (document.body.scrollHeight - window.innerHeight) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+});
+
+// FLOATING DOTS
+const dotsContainer = document.getElementById('bgDots');
+for (let i = 0; i < 18; i++) {
+  const d = document.createElement('div');
+  const size = Math.random() * 6 + 3;
+  d.className = 'bg-dot';
+  d.style.cssText = `width:${size}px;height:${size}px;left:${Math.random()*100}%;animation-duration:${Math.random()*10+8}s;animation-delay:${Math.random()*8}s;`;
+  dotsContainer.appendChild(d);
+}
+
+// CARS IN ROAD
+const roads = [
+  { top: '20px', speed: 8, emoji: '🚗', seats: '3 asientos vacíos' },
+  { top: '90px', speed: 11, emoji: '🚙', seats: '2 asientos vacíos' },
+  { top: '160px', speed: 9, emoji: '🚕', seats: '1 asiento vacío' },
+  { top: '30px', speed: 14, emoji: '🚘', seats: '3 asientos vacíos', delay: 3 },
+  { top: '100px', speed: 13, emoji: '🚗', seats: '2 asientos vacíos', delay: 5 },
+  { top: '170px', speed: 10, emoji: '🚙', seats: '3 asientos vacíos', delay: 2 },
+];
+const rc = document.getElementById('roadContainer');
+roads.forEach(r => {
+  const lane = document.createElement('div');
+  lane.style.cssText = `position:absolute;left:0;right:0;top:${r.top};height:50px;`;
+  const car = document.createElement('div');
+  car.style.cssText = `position:absolute;top:50%;transform:translateY(-50%);font-size:1.8rem;animation:driveCar ${r.speed}s linear infinite ${r.delay||0}s;`;
+  car.textContent = r.emoji;
+  const seat = document.createElement('div');
+  seat.className = 'empty-seat';
+  seat.textContent = r.seats;
+  car.appendChild(seat);
+  lane.appendChild(car);
+  rc.appendChild(lane);
+});
+
+// SCROLL ANIMATIONS
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('visible');
+    }
+  });
+}, { threshold: 0.15 });
+
+document.querySelectorAll('.insight-card, .how-step, .diff-quote, .diff-sub').forEach(el => observer.observe(el));
+
+// COUNTER ANIMATION
+let metricsAnimated = false;
+const metricsObserver = new IntersectionObserver(entries => {
+  if (entries[0].isIntersecting && !metricsAnimated) {
+    metricsAnimated = true;
+    animateCounter('m1', 0, 40, '%', '-');
+    animateCounter('m2', 0, 60, '%', '+');
+    animateCounter('m3', 0, 70, '%', '-');
+  }
+}, { threshold: 0.4 });
+metricsObserver.observe(document.getElementById('impact'));
+
+function animateCounter(id, from, to, suffix, prefix) {
+  const el = document.getElementById(id);
+  const duration = 2000;
+  const start = performance.now();
+  function update(now) {
+    const progress = Math.min((now - start) / duration, 1);
+    const ease = 1 - Math.pow(1 - progress, 3);
+    const val = Math.round(from + (to - from) * ease);
+    el.textContent = prefix + val + suffix;
+    if (progress < 1) requestAnimationFrame(update);
+  }
+  requestAnimationFrame(update);
+}
+
+// APP SIMULATION STATE
+let selectedRoute = '';
+let selectedTime = '';
+let currentMatchIndex = 0;
+
+const matches = [
+  { name: 'Juan Camilo', initial: 'J', career: 'Ingeniería', phone: '+57 312 456 7890', wa: '573124567890', route: null, time: null, meeting: 'Parque El Poblado · {time_minus5}' },
+  { name: 'Sara Vélez', initial: 'S', career: 'Administración', phone: '+57 301 987 6543', wa: '573019876543', route: null, time: null, meeting: 'CC. Premium Plaza · {time_minus5}' },
+  { name: 'Tomás Restrepo', initial: 'T', career: 'Diseño', phone: '+57 320 112 2334', wa: '573201122334', route: null, time: null, meeting: 'Parque Lleras · {time_minus5}' },
+];
+
+function selectRoute(btn, route) {
+  document.querySelectorAll('.route-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedRoute = route;
+  checkReady();
+}
+
+function selectTime(btn) {
+  document.querySelectorAll('.time-chip').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedTime = btn.textContent;
+  checkReady();
+}
+
+function checkReady() {
+  const btn = document.getElementById('searchBtn');
+  btn.disabled = !(selectedRoute && selectedTime);
+}
+
+function setStepDots(active) {
+  for (let i = 1; i <= 4; i++) {
+    const d = document.getElementById('sd' + i);
+    d.className = 'step-dot';
+    if (i < active) d.classList.add('done');
+    else if (i === active) d.classList.add('active');
+  }
+}
+
+function startSearch() {
+  showStep(2);
+  setStepDots(2);
+  setTimeout(() => {
+    populateMatch();
+    showStep(3);
+    setStepDots(3);
+  }, 2000);
+}
+
+function populateMatch() {
+  const m = matches[currentMatchIndex % matches.length];
+  document.getElementById('matchAvatar').textContent = m.initial;
+  document.getElementById('matchName').textContent = m.name;
+  document.getElementById('matchRoute').textContent = selectedRoute;
+  document.getElementById('matchTime').textContent = selectedTime;
+  document.getElementById('matchCareer').textContent = m.career;
+}
+
+function connectMatch() {
+  const m = matches[currentMatchIndex % matches.length];
+  document.getElementById('successName').textContent = m.name;
+  // compute meeting time
+  const parts = selectedTime.split(':');
+  let h = parseInt(parts[0]);
+  let min = parseInt(parts[1]) - 5;
+  if (min < 0) { min += 60; h -= 1; }
+  const timeStr = h + ':' + (min < 10 ? '0'+min : min) + ' am';
+  const zone = selectedRoute.split(' ')[0];
+  document.getElementById('successMeeting').textContent = `${zone} · ${timeStr}`;
+  // populate chat
+  document.getElementById('chatAvatar').textContent = m.initial;
+  document.getElementById('chatName').textContent = m.name;
+  initChat(m.name);
+  showStep(4);
+  setStepDots(4);
+  showToast('🎉', '¡Match confirmado!', `Conectado con ${m.name}`);
+}
+
+function nextMatch() {
+  currentMatchIndex++;
+  document.getElementById('simStep3').classList.remove('active');
+  void document.getElementById('simStep3').offsetWidth;
+  document.getElementById('simStep3').classList.add('active');
+  populateMatch();
+}
+
+function showStep(n) {
+  for (let i = 1; i <= 4; i++) {
+    document.getElementById('simStep' + i).classList.toggle('active', i === n);
+  }
+}
+
+function resetSim() {
+  selectedRoute = '';
+  selectedTime = '';
+  currentMatchIndex = 0;
+  document.querySelectorAll('.route-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('.time-chip').forEach(b => b.classList.remove('selected'));
+  document.getElementById('searchBtn').disabled = true;
+  showStep(1);
+  setStepDots(1);
+}
+
+// CHAT
+const autoReplies = [
+  '¡Hola! Sí, perfecto 👍',
+  'Me queda bien ese horario 🕐',
+  '¿Nos vemos en el punto de encuentro?',
+  '¡Claro! Allá nos vemos 🚗',
+  'Perfecto, te aviso cuando salga 📍',
+  'Dale, cuento contigo entonces ✅',
+];
+let replyIdx = 0;
+let chatMatchName = '';
+
+function initChat(name) {
+  chatMatchName = name;
+  const box = document.getElementById('chatMessages');
+  box.innerHTML = '';
+  replyIdx = 0;
+  addChatMsg(name, `¡Hola! Vi que hacemos la misma ruta 🎉 ¿A qué hora sales exactamente?`, false);
+}
+
+function addChatMsg(sender, text, isMe) {
+  const box = document.getElementById('chatMessages');
+  const row = document.createElement('div');
+  row.style.cssText = `display:flex;flex-direction:column;align-items:${isMe?'flex-end':'flex-start'};gap:3px;`;
+  const bubble = document.createElement('div');
+  bubble.style.cssText = `
+    max-width:75%; padding:9px 13px; border-radius:${isMe?'16px 16px 4px 16px':'16px 16px 16px 4px'};
+    background:${isMe?'var(--accent)':'rgba(255,255,255,0.08)'};
+    color:var(--text); font-size:0.78rem; line-height:1.5;
+    animation: stepIn 0.25s ease;
+  `;
+  bubble.textContent = text;
+  const meta = document.createElement('div');
+  meta.style.cssText = `font-size:0.6rem;color:var(--text2);`;
+  const now = new Date();
+  meta.textContent = `${isMe?'Tú':sender} · ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
+  row.appendChild(bubble);
+  row.appendChild(meta);
+  box.appendChild(row);
+  box.scrollTop = box.scrollHeight;
+}
+
+function sendChatMsg() {
+  const inp = document.getElementById('chatInput');
+  const txt = inp.value.trim();
+  if (!txt) return;
+  addChatMsg('Tú', txt, true);
+  inp.value = '';
+  setTimeout(() => {
+    const reply = autoReplies[replyIdx % autoReplies.length];
+    replyIdx++;
+    addChatMsg(chatMatchName, reply, false);
+  }, 900 + Math.random() * 600);
+}
+
+
+function showToast(icon, title, msg) {
+  const toast = document.getElementById('toast');
+  document.getElementById('toastIcon').textContent = icon;
+  document.getElementById('toastTitle').textContent = title;
+  document.getElementById('toastMsg').textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 3500);
+}
+
+// CALCULATOR
+function calcTime() {
+  const days = parseFloat(document.getElementById('calcDays').value) || 0;
+  const mins = parseFloat(document.getElementById('calcMins').value) || 0;
+  const weeksPerSemester = 16;
+  const totalMins = days * mins * weeksPerSemester;
+  const hours = (totalMins / 60).toFixed(1);
+  const res = document.getElementById('calcResult');
+  res.classList.add('show');
+  document.getElementById('calcHours').textContent = hours;
+  document.getElementById('calcFun').innerHTML = getFunFact(parseFloat(hours));
+}
+
+function getFunFact(hours) {
+  if (hours < 5) return `Con ese tiempo podrías haber visto <strong>${Math.round(hours*2)} películas</strong> completas 🎬`;
+  if (hours < 10) return `Con esas <strong>${hours} horas</strong> pudiste haber ido <strong>${Math.floor(hours/2)} veces</strong> al estadio y disfrutado el partido completo 🏟️`;
+  if (hours < 20) return `Con ese tiempo pudiste haber viajado <strong>${Math.floor(hours/5)} veces</strong> a Cartagena y volver 🏖️`;
+  if (hours < 40) return `¡Con esas <strong>${hours} horas</strong> pudiste haberte tomado un viaje a <strong>San Andrés</strong> y aún te sobraba tiempo 🏝️`;
+  return `Con ese tiempo pudiste aprender <strong>una habilidad nueva completa</strong> — tocar guitarra, diseñar o programar 🎸`;
+}
+
+// Trigger calc on load
+setTimeout(calcTime, 500);
+
+// REGISTER
+function submitRegister() {
+  const name = document.getElementById('regName').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  if (!name || !email) {
+    showToast('⚠️', 'Campos requeridos', 'Por favor ingresa tu nombre y correo.');
+    return;
+  }
+  document.getElementById('registerForm').style.display = 'none';
+  const succ = document.getElementById('registerSuccess');
+  succ.classList.add('show');
+  document.getElementById('registerSuccessMsg').textContent = `¡Hola, ${name}! Te avisamos en cuanto ParkShare llegue a tu campus. Mientras tanto, síguenos en redes.`;
+  showToast('🎉', '¡Registro exitoso!', `Bienvenid@ a la lista beta, ${name}`);
+}
+
+// PERIODIC TOAST NOTIFICATIONS
+const notifs = [
+  ['🚗','Nuevo match disponible','Alguien de Envigado comparte tu ruta'],
+  ['📍','Match en El Poblado','Sale a las 7:00 am → Alto de las Palmas'],
+  ['⭐','Valoración recibida','Tu compañero te dejó 5 estrellas'],
+  ['🎉','3 estudiantes se unieron','Comunidad creciendo en tu zona'],
+];
+let notifIdx = 0;
+setTimeout(() => {
+  setInterval(() => {
+    const n = notifs[notifIdx % notifs.length];
+    showToast(n[0], n[1], n[2]);
+    notifIdx++;
+  }, 7000);
+}, 4000);
+</script>
+</body>
+</html>
